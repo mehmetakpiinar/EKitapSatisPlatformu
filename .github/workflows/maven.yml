@@ -1,60 +1,69 @@
-name: CI - Maven Derleme Süreci
+name: CI/CD - Maven Build ve AWS EC2 Deployment
 
 on:
   push:
-    branches: [ "main", "dev" ]
-  pull_request:
     branches: [ "main" ]
 
 jobs:
-  build:
+  build-and-deploy:
     runs-on: ubuntu-latest
 
-    # 1. MySQL Servisini Başlatıyoruz (Görseldeki ayarlar)
+    # 1. MySQL Servisi
     services:
       mysql:
         image: mysql:8.0
         env:
-          MYSQL_DATABASE: kitapliste
+          # DİKKAT: Aşağıya kendi veritabanı adını yazmalısın
+          MYSQL_DATABASE: ekitapsatisprojesi
           MYSQL_ROOT_PASSWORD: 2550
         ports:
           - 3306:3306
-        options: >-
-          --health-cmd="mysqladmin ping -h 127.0.0.1 -uroot -p2550"
-          --health-interval=10s
-          --health-timeout=5s
-          --health-retries=10
+        options: --health-cmd="mysqladmin ping" --health-interval=10s --health-timeout=5s --health-retries=10
 
     steps:
-    # 2. Kodları Çek
-    - name: Depoyu Kontrol Et
-      uses: actions/checkout@v4
+      - name: Kodu Çek
+        uses: actions/checkout@v4
 
-    # 3. Java 21 Kurulumu (Görselde JDK 21 kullanılmış, standart şablon 17 idi, güncelledim)
-    - name: Set up JDK 17
-      uses: actions/setup-java@v4
-      with:
-        java-version: '21'
-        distribution: 'temurin'
-        cache: maven
+      # DÜZELTME: Java 17 olarak ayarlandı
+      - name: JDK 17 Kurulumu
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+          cache: maven
 
-    # 4. MySQL'in tam olarak hazır olmasını bekle (Hata almamak için kritik adım)
-    - name: MySQL hazır olana kadar bekle
-      run: |
-        for i in {1..40}; do
-          if mysqladmin ping -h 127.0.0.1 -uroot -p2550 --silent; then
-            echo "MySQL hazır"
-            break
-          fi
-          echo "MySQL bekleniyor..."
-          sleep 3
-        done
+      # 2. Maven ile Derle
+      - name: Maven ile Derle ve Test Et
+        env:
+          # DİKKAT: Buradaki URL'de de veritabanı adını değiştirmelisin
+          SPRING_DATASOURCE_URL: jdbc:mysql://127.0.0.1:3306/ekitapsatisprojesi?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true&useUnicode=true&characterEncoding=utf8
+          SPRING_DATASOURCE_USERNAME: root
+          SPRING_DATASOURCE_PASSWORD: 2550
+          SPRING_JPA_HIBERNATE_DDL_AUTO: update
+        run: mvn -B clean package
 
-    # 5. Maven ile Test ve Derleme (Environment değişkenleri ile)
-    - name: Maven Test + Build
-      env:
-        SPRING_DATASOURCE_URL: jdbc:mysql://127.0.0.1:3306/kitapliste?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true&useUnicode=true&characterEncoding=utf8
-        SPRING_DATASOURCE_USERNAME: root
-        SPRING_DATASOURCE_PASSWORD: 2550
-        SPRING_JPA_HIBERNATE_DDL_AUTO: update
-      run: mvn -B clean verify
+      # 3. JAR Dosyasını Sunucuya Gönder
+      - name: JAR Dosyasını EC2'ye Gönder
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USERNAME }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          source: "target/*.jar"
+          target: "/home/ubuntu/app"
+          strip_components: 1
+
+      # 4. Sunucuda Uygulamayı Başlat
+      - name: Sunucuda Uygulamayı Başlat
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USERNAME }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          script: |
+            mkdir -p /home/ubuntu/app
+            # 8095 portunu kullanan eski uygulamayı durdur
+            sudo fuser -k 8095/tcp || true
+            cd /home/ubuntu/app
+            # Yeni uygulamayı başlat
+            nohup java -jar *.jar > app.log 2>&1 &
