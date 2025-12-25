@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="tr" xmlns:th="http://www.thymeleaf.org" th:replace="~{base :: layout(~{::title}, ~{::#content})}">
+<head>
+    <title th:text="${kitap.ad} + ' Detay'">Kitap Detay</title>
+</head>
+<body>
+    <div th:fragment="content" id="content">
+        
+        <a href="/ana-sayfa" class="btn btn-outline-secondary btn-sm mb-4">
+            <i class="fas fa-arrow-left"></i> Ana Sayfaya Dön
+        </a>
+        
+        <div class="card shadow-lg mb-5">
+            <div class="card-body">
+                <div class="row">
+                    
+                    <div class="col-md-4 text-center">
+                         <img th:if="${kitap.resimUrl != null and kitap.resimUrl != ''}" 
+                             th:src="${kitap.resimUrl}" 
+                             class="img-fluid rounded shadow-sm" 
+                             alt="Kitap Kapağı"
+                             style="max-height: 400px; object-fit: contain;">
+                        <div th:unless="${kitap.resimUrl != null and kitap.resimUrl != ''}" 
+                             class="bg-light p-5 border rounded" 
+                             style="height: 400px; line-height: 300px;">
+                            <i class="fas fa-book fa-5x text-secondary"></i>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-5">
+                        <h1 class="card-title text-primary" th:text="${kitap.ad}">Kitap Adı</h1>
+                        <h4 class="text-muted mb-4" th:text="${kitap.yazar}">Yazar</h4>
+                        
+                        <h5 class="mt-4">Özet:</h5>
+                        <p class="text-secondary" th:text="${kitap.aciklama}">Kitap Açıklaması...</p>
+                        
+                        
+				   <div class="mt-4">
+						    <h6 class="text-muted border-bottom pb-2">Kitap Özellikleri</h6>
+						    <table class="table table-sm table-borderless small">
+						        <tbody>
+						            <tr>
+						                <td class="text-muted w-50">Yayınevi:</td>
+						                <td class="fw-bold" th:text="${kitap.yayinevi}">-</td>
+						            </tr>
+						            <tr>
+						                <td class="text-muted">Yazar:</td>
+						                <td class="fw-bold" th:text="${kitap.yazar}">-</td>
+						            </tr>
+						            <tr>
+						                <td class="text-muted">ISBN:</td>
+						                <td th:text="${kitap.isbn}">-</td>
+						            </tr>
+						            <tr>
+						                <td class="text-muted">Sayfa Sayısı:</td>
+						                <td th:text="${kitap.sayfaSayisi}">-</td>
+						            </tr>
+						            <tr>
+						                <td class="text-muted">Basım Yılı:</td>
+						                <td th:text="${kitap.basimYili}">-</td>
+						            </tr>
+						            <tr>
+						                <td class="text-muted">Dil:</td>
+						                <td th:text="${kitap.dil}">-</td>
+						            </tr>
+						            <tr>
+						                <td class="text-muted">Kapak Türü:</td>
+						                <td th:text="${kitap.kapakTuru}">-</td>
+						            </tr>
+						        </tbody>
+						    </table>
+						</div>
+                        
+                        
+                        
+                        
+                        <div class="my-3">
+                            <span class="text-warning"><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star-half-alt"></i></span> 
+                            (4.5 / 5 - <span th:text="${#lists.size(yorumlar)}"></span> Yorum)
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-3 border-start p-4">
+                        <div class="text-center">
+                            <h2 class="text-danger mb-4">
+                                <span th:text="${#numbers.formatDecimal(kitap.fiyat, 0, 'COMMA', 2, 'POINT')}">0.00</span> TL
+                            </h2>
+                            
+                            <form action="/sepete-ekle" method="post" class="mb-3">
+                                <input type="hidden" name="kitapId" th:value="${kitap.id}">
+                                <button type="submit" class="btn btn-lg btn-success w-100 mb-2" 
+                                        onclick="return confirm('Bu kitabı satın almak istediğinizden emin misiniz?')">
+                                    <i class="fas fa-cart-plus"></i> Sepete Ekle
+                                </button>
+                            </form>
+                            
+                            <button class="btn btn-outline-primary w-100">
+                                <i class="fas fa-cart-plus"></i> Sepete Ekle
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row mt-5">
+            <div class="col-md-12">
+                <h3 class="mb-4 text-secondary border-bottom pb-2">Kullanıcı Yorumları</h3>
+
+                <div class="card p-4 mb-4 shadow-sm">
+                    <h5>Yorumunu Ekle</h5>
+                    <form action="/yorum-yap" method="post">
+                        <input type="hidden" name="kitapId" th:value="${kitap.id}">
+                        
+                        <div class="mb-3">
+                            <textarea name="yorumMetni" class="form-control" placeholder="Düşüncelerinizi paylaşın..." rows="3" required></textarea>
+                        </div>
+                        <button type="submit" class="btn btn-sm btn-primary">
+                            <i class="fas fa-comment"></i> Yorumu Gönder
+                        </button>
+                    </form>
+                </div>
+
+                <div th:if="${#lists.isEmpty(yorumlar)}" class="alert alert-info">
+                    Henüz hiç yorum yapılmamış. İlk yorumu sen yap!
+                </div>
+
+                <div class="list-group">
+                    <div th:each="yorum : ${yorumlar}" class="list-group-item list-group-item-action flex-column align-items-start">
+                        <div class="d-flex w-100 justify-content-between">
+                            <h6 class="mb-1 text-dark">
+                                <i class="fas fa-user-circle"></i> <span th:text="${yorum.kullanici.username}">Kullanıcı Adı</span>
+                            </h6>
+                            <small class="text-muted">Şimdi</small>
+                        </div>
+                        <p class="mb-1 small" th:text="${yorum.metin}">Yorum metni burada yer alıyor.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+    </div>
+</body>
+</html>

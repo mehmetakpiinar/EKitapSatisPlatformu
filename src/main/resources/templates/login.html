@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="tr" xmlns:th="http://www.thymeleaf.org" th:replace="~{base :: layout(~{::title}, ~{::#content})}">
+<head>
+    <title>Giriş Yap</title>
+</head>
+<body>
+    <div th:fragment="content" id="content">
+        <div class="row justify-content-center mt-5">
+            <div class="col-md-6 col-lg-4">
+                <div class="card shadow-lg border-0 rounded-lg mt-5">
+                    
+                    <div class="card-header bg-primary text-white text-center">
+                        <h3 class="fw-light my-4">Platforma Giriş</h3>
+                    </div>
+                    
+                    <div class="card-body">
+                        <div th:if="${error}" class="alert alert-danger" role="alert">
+                            <i class="fas fa-exclamation-triangle"></i>
+                            <span th:text="${error}"></span>
+                        </div>
+                        
+                        <div th:if="${param.success}" class="alert alert-success" role="alert">
+                            Kayıt başarılı! Lütfen giriş yapın.
+                        </div>
+                        
+						<form th:action="@{/login}" th:object="${loginDto}" method="post">
+						    
+						    <div class="mb-3">
+						        <label class="form-label">Kullanıcı Adı</label>
+						        <input type="text" th:field="*{username}" class="form-control" required autofocus>
+						    </div>
+						
+						    <div class="mb-3">
+						        <label class="form-label">Şifre</label>
+						        <input type="password" th:field="*{password}" class="form-control" required>
+						    </div>
+						
+						    <button type="submit" class="btn btn-primary w-100">Giriş Yap</button>
+						</form>
+                    </div>
+                    
+                    <div class="card-footer text-center py-3">
+                        <div class="small">
+                            Hesabın yok mu? <a href="/register">Hemen Kayıt Ol!</a>
+                        </div>
+                    </div>
+                    
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

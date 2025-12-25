@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="tr" xmlns:th="http://www.thymeleaf.org" th:replace="~{base :: layout(~{::title}, ~{::#content})}">
+<head>
+    <title>Kayıt Ol</title>
+</head>
+<body>
+    <div th:fragment="content" id="content">
+        <div class="row justify-content-center mt-5">
+            <div class="col-md-6 col-lg-4">
+                <div class="card shadow-lg border-0 rounded-lg mt-5">
+                    <div class="card-header bg-success text-white text-center">
+                        <h3 class="fw-light my-4">Yeni Hesap Oluştur</h3>
+                    </div>
+                    <div class="card-body">
+                        <div th:if="${error}" class="alert alert-danger" role="alert">
+                            <i class="fas fa-exclamation-triangle"></i>
+                            <span th:text="${error}"></span>
+                        </div>
+                        
+                        <form th:action="@{/register}" method="post" th:object="${kullaniciDto}">
+                            
+                            <div class="form-floating mb-3">
+                                <input class="form-control" id="username" th:field="*{username}" type="text" placeholder="Kullanıcı Adı" required>
+                                <label for="username">Kullanıcı Adı</label>
+                            </div>
+                            <div class="form-floating mb-3">
+                                <input class="form-control" id="email" th:field="*{email}" type="email" placeholder="E-posta Adresi">
+                                <label for="email">E-posta Adresi</label>
+                            </div>
+                            <div class="form-floating mb-3">
+                                <input class="form-control" id="password" th:field="*{password}" type="password" placeholder="Şifre" required>
+                                <label for="password">Şifre</label>
+                            </div>
+                            <div class="form-check mb-3">
+                                 <input class="form-check-input" type="checkbox" th:field="*{admin}" id="saticiCheck">
+                                 <label class="form-check-label" for="saticiCheck">
+                                  Satıcı Hesabı Oluştur (Kitap Ekleyebilir)
+                                 </label>
+                            </div>
+                            <div class="d-grid gap-2 mt-4 mb-0">
+                                <button type="submit" class="btn btn-success btn-lg">
+                                    <i class="fas fa-user-plus"></i> Kayıt Ol
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                    <div class="card-footer text-center py-3">
+                        <div class="small">
+                            Zaten bir hesabın var mı? <a href="/login">Giriş Yap</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
